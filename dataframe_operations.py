@@ -29,12 +29,17 @@ def filter_failed_hetrozygote(df: pd.DataFrame) -> pd.DataFrame:
         df[allele_columns].eq(df["Parent1.1"], axis=0).all(axis=1)
     )
 
-    return df.loc[~mask_heterozygote]
+    mask_failed = (
+        df.eq("failed").any(axis=1)
+    )
+
+    df = df.loc[~mask_heterozygote]
+    return df.loc[~mask_failed]
 
 
 if __name__ == "__main__":
     df = pd.read_excel("data/Phenotype_data_PennxMB_population.xlsx")
     df = df.drop(["Unnamed: 10","Unnamed: 11","Unnamed: 12","cellcount/seconds/flowers*120(=seconds to measure complete sample)"],
                   axis=1)
-    result = get_average_per_plant(df, "Plant", "#Pollen per flower")
+    result = get_average_per_plant(df, "Plant", "Pollen Viability")
     print(result)
