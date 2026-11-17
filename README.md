@@ -96,3 +96,6 @@ De heterozygoot test is [hier](/data/heterozygote_test.csv) te vinden en de hete
 De functie `t_test_M()` accepteerd een dataframe (fenotype data) en voert vervolgens een t-test uit op deze dataset waarbij de M resultaten worden vergeleken met de niet M of N resultaten.
 Dit wordt gedaan door eerst twee dataframes te maken, 1 voor planten met M in de naam en 1 voor planten zonder M of N in de naam. Hiervoor moet de plant colom eerst volledig naar strings worden overgezet. Vervolgens worden de planten gegroupeerd en er wordt een t-test uitgevoerd(niet de goede). Hierbij wordt de M groep per plant vergeleken. Als laatst wordt de plant colom weer een naar int overgezet. Ook wordt de dataframe op plant gesorteerd en alle indexen worden gereset.
 
+De functie `create_manhattan_like_plot()` maakt een plot die iets weg moet hebben van een hanhattan plot hier enkele voorbeelden:
+![met gemiddelde](plots/pollen_viability_average.png)
+![met p waarde](plots/pollen_viability_t-test.png)
