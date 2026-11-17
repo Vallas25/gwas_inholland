@@ -1,10 +1,10 @@
 import pandas as pd
 import scipy.stats as stats
 
-def get_average_per_plant(df: pd.DataFrame, series1_name: str, series2_name: str) -> pd.DataFrame:
+def get_average_per_plant(df: pd.DataFrame, series_name: str) -> pd.DataFrame:
     # groups series, then gets average by grouped.
     return (
-        df.groupby(series1_name)[series2_name].mean().reset_index()
+        df.groupby("Plant")[series_name].mean().reset_index()
     )
 
 def clean_phenotype_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -44,14 +44,18 @@ def t_test_M(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     
     df["Plant"] = df["Plant"].astype(str)
-    df_m = df[(df["Plant"].str.contains("M"))]
+    df_m = df[(df["Plant"].str.contains("M"))].reset_index()
 
-    df_other = df[~(df["Plant"].str.contains("M")) & ~(df["Plant"].str.contains("N"))]
+    df_other = df[~(df["Plant"].str.contains("M")) & ~(df["Plant"].str.contains("N"))].reset_index()
+
+    df_other["Plant"] = df_other["Plant"].astype(int)
 
     grouped = df_other.groupby("Plant").agg(
-        p_value=("Pollen Viability", lambda plant: stats.ttest_ind(plant, df_m["Pollen Viability"]).pvalue), 
+        p_value=("Pollen Viability",
+                 lambda plant: stats.ttest_ind(plant, df_m["Pollen Viability"]).pvalue), 
     )
-    return grouped.reset_index()
+
+    return grouped.reset_index().sort_values("Plant").reset_index(drop=True)
 
 
 if __name__ == "__main__":
