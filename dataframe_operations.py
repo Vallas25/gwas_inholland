@@ -8,6 +8,7 @@ def get_average_per_plant(df: pd.DataFrame, series1_name: str, series2_name: str
     )
 
 def clean_phenotype_data(df: pd.DataFrame) -> pd.DataFrame:
+    # removes unnecacarry rows from phenotype_data dataset
     return df.drop(["Unnamed: 10","Unnamed: 11","Unnamed: 12","cellcount/seconds/flowers*120(=seconds to measure complete sample)"],
                      axis=1)
 
@@ -38,21 +39,17 @@ def filter_failed_hetrozygote(df: pd.DataFrame) -> pd.DataFrame:
     return df.loc[~mask_failed]
 
 def t_test_M(df: pd.DataFrame) -> pd.DataFrame:
-    print(df is None)
+    # returns dataframe where all non parental plants are compared to the M parental plant and a indipended t-test is performed
+
     df = df.copy()
-    # use mask with .str.contains("M") instead of this convoluted way
-    df = df.sort_values(
-        ["Plant"],
-        key=lambda col: col.astype(str).map(
-            lambda x: (0, int(x)) if x.isdigit() else (1,x)
-        )
-        ).reset_index()
-    df_m = df.iloc[646:685]
-    df_other = df.iloc[:645] # use mask ~.str.contains("M")|~.str.contains("N")
+    
+    df["Plant"] = df["Plant"].astype(str)
+    df_m = df[(df["Plant"].str.contains("M"))]
+
+    df_other = df[~(df["Plant"].str.contains("M")) & ~(df["Plant"].str.contains("N"))]
 
     grouped = df_other.groupby("Plant").agg(
-        p_value="Pollen Viability", 
-        lambda plant: stats.ttest_ind(plant, df_other).pvalue 
+        p_value=("Pollen Viability", lambda plant: stats.ttest_ind(plant, df_m["Pollen Viability"]).pvalue), 
     )
     return grouped.reset_index()
 
@@ -60,5 +57,6 @@ def t_test_M(df: pd.DataFrame) -> pd.DataFrame:
 if __name__ == "__main__":
     df = pd.read_excel("data/Phenotype_data_PennxMB_population.xlsx")
     df = clean_phenotype_data(df)
-    result = t_test_M(df)
-    print(result)
+    df["Plant"] = df["Plant"].astype(str)
+    result = df[~(df["Plant"].str.contains("M")) & ~(df["Plant"].str.contains("N"))]
+    print(len(result))
