@@ -80,10 +80,33 @@ def merge_geno_and_fenotype(df_geno: pd.DataFrame, df_feno: pd.DataFrame) -> pd.
 
     return pd.merge(df_geno_transposed, df_feno_minimal, on="Plant", how="inner"), marker_info
 
+def check_merge(df_merged: pd.DataFrame):
+    #checks merges
+    print(df_merged.shape)
+    print(df_merged.head())
+    print(df_merged["Plant"].duplicated().sum())
+    print(df_merged.isna().sum())
+
+def group_by_location(df: pd.DataFrame, phenotype:str="Pollen Viability") -> list:
+    df = df.copy()
+
+    snp_cols = []
+    for col in df.columns:
+        if col != "Plant" and col != phenotype and col != "Unnamed: 0":
+            snp_cols.append(col)
+
+    result = []
+
+    for col in snp_cols:
+        result.append({
+            "position": col,
+            "df": df[[col,phenotype]]
+        })
+
+    return result
 
 
 if __name__ == "__main__":
-    df_geno = pd.read_csv("data/failed_test.csv")
-    df_feno = pd.read_excel("data/Phenotype_data_PennxMB_population.xlsx")
-    df_feno = clean_phenotype_data(df_feno)
-    merge_geno_and_fenotype(df_geno, df_feno)
+    df = pd.read_csv("data/merged_df.csv")
+    result = group_by_location(df)
+    print(result[0])
