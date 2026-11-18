@@ -36,7 +36,7 @@ def filter_failed_hetrozygote(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     df = df.loc[~mask_heterozygote]
-    return df.loc[~mask_failed]
+    return df.loc[~mask_failed].reset_index(drop=True)
 
 def t_test_M(df: pd.DataFrame) -> pd.DataFrame:
     # returns dataframe where all non parental plants are compared to the M parental plant and a indipended t-test is performed
@@ -57,10 +57,33 @@ def t_test_M(df: pd.DataFrame) -> pd.DataFrame:
 
     return grouped.reset_index().sort_values("Plant").reset_index(drop=True)
 
+def merge_geno_and_fenotype(df_geno: pd.DataFrame, df_feno: pd.DataFrame) -> pd.DataFrame:
+    df_geno = df_geno.copy()
+
+    df_feno_minimal = df_feno[["Plant", "Pollen Viability"]]
+
+    df_feno_minimal = get_average_per_plant(df_feno_minimal, "Pollen Viability")
+    
+    marker_info = df_geno[["Markers", "Chromosome", "location"]]
+
+    df_geno_transposed = (
+        df_geno
+        .drop(columns=["Plant", "Chromosome", "location"])
+        .set_index("Markers")
+        .T
+        .rename_axis("Plant")
+    .   reset_index()
+    )
+
+    df_geno_transposed["Plant"] = df_geno_transposed["Plant"].astype(str).str.strip()
+    df_feno_minimal["Plant"] = df_feno_minimal["Plant"].astype(str).str.strip()
+
+    return pd.merge(df_geno_transposed, df_feno_minimal, on="Plant", how="inner"), marker_info
+
+
 
 if __name__ == "__main__":
-    df = pd.read_excel("data/Phenotype_data_PennxMB_population.xlsx")
-    df = clean_phenotype_data(df)
-    df["Plant"] = df["Plant"].astype(str)
-    result = df[~(df["Plant"].str.contains("M")) & ~(df["Plant"].str.contains("N"))]
-    print(len(result))
+    df_geno = pd.read_csv("data/failed_test.csv")
+    df_feno = pd.read_excel("data/Phenotype_data_PennxMB_population.xlsx")
+    df_feno = clean_phenotype_data(df_feno)
+    merge_geno_and_fenotype(df_geno, df_feno)
