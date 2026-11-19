@@ -6,7 +6,9 @@ import numpy as np
 def main():
     df = pd.read_csv("data/merged_df.csv")
     result = group_by_location(df)
-    create_manhattan_like_plot(df=result[5]["df"], y_axis_name="Pollen Viability", x_axis_name=result[5]["position"])
+    p_values = get_p_values(result)
+    p_values["-logp"] = -np.log10(p_values["p_value"])
+    create_manhattan_like_plot(df=p_values, y_axis_name="-logp", x_axis_name="position")
 
 if __name__ == "__main__":
     main()
