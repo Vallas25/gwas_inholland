@@ -1,6 +1,14 @@
 import plotly.graph_objects as go
 import pandas as pd
 
+colors = [
+    "red",
+    "violet",
+    "blue",
+    "green",
+    "yellow",
+    "orange",]
+
 def create_manhattan_plot(df: pd.DataFrame, y_axis_name: str, x_axis_name:str="Plant", threshold: float = 7.3):
     fig = go.Figure()
 

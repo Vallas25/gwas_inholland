@@ -21,7 +21,7 @@ def is_above_mean(df: pd.DataFrame, series_name: str) -> pd.DataFrame:
 
     return df
 
-def filter_failed_hetrozygote(df: pd.DataFrame) -> pd.DataFrame:
+def filter_failed_homozygote(df: pd.DataFrame) -> pd.DataFrame:
     # returns df where all failed mesurements and hetrozygote loci are removed
     df = df.copy()
 
@@ -29,16 +29,16 @@ def filter_failed_hetrozygote(df: pd.DataFrame) -> pd.DataFrame:
     allele_columns = ["Parent1.1", "Parent1.2", "Parent2.1", "Parent2.2"]
 
     # masks for removing rows containing a failed mesurement or both parents are heterozygotes
-    mask_heterozygote = (
+    mask_homozygote = (
         df[allele_columns].eq(df["Parent1.1"], axis=0).all(axis=1)
     )
 
     mask_failed = (
-        df.eq("failed").any(axis=1)
+        df.eq("failed").all(axis=1)
     )
 
     # returning dataframe with only homologous parental markers and non failed mesurements
-    df = df.loc[~mask_heterozygote]
+    df = df.loc[~mask_homozygote]
     return df.loc[~mask_failed].reset_index(drop=True)
 
 def t_test_M(df: pd.DataFrame) -> pd.DataFrame:
@@ -78,12 +78,15 @@ def merge_geno_and_fenotype(df_geno: pd.DataFrame, df_pheno: pd.DataFrame) -> pd
     # transposing the geno df (switching columns and rows)
     df_geno_transposed = (
         df_geno
-        .drop(columns=["Plant", "Chromosome", "location"])
+        .drop(columns=[ "Chromosome", "location"])
         .set_index("Markers")
         .T
-        .rename_axis("Plant")
-    .   reset_index()
+        .rename_axis(index="Plant", columns=None)
+        .reset_index()
     )
+
+    print("Transposed")
+    print(df_geno_transposed)
 
     # formatting everything correctly, so merge will go correctly
     df_geno_transposed["Plant"] = df_geno_transposed["Plant"].astype(str).str.strip()
@@ -126,11 +129,14 @@ def get_p_values(data_frames: list, phenotype:str="Pollen Viability") -> pd.Data
     for item in data_frames:
         position = item["position"]
         df = item["df"]
-        unique = df[position].unique()
+        unique = list(df[position].unique())
 
         #grouping by basepairs
         grouped = df.groupby(df[position])
         groups = []
+
+        if "failed" in unique:
+            unique.remove("failed")
 
         # if there are less than 2 unique genotypes, annova cannot be performed
         if len(unique) < 2:
@@ -148,13 +154,21 @@ def get_p_values(data_frames: list, phenotype:str="Pollen Viability") -> pd.Data
 
     # creates dataframe containing info
     return pd.DataFrame({
-        "position": positions,
+        "Markers": positions,
         "p_value": p_values
         })
 
 def merge_pvalues_and_genotype_info(p_values:pd.DataFrame, genotype_info:pd.DataFrame) -> pd.DataFrame:
     # merges p-values and genotype info dataframes
-    pass
+    merged = pd.merge(
+        p_values,
+        genotype_info,
+        how="inner",
+        on="Markers",
+        indicator=True
+    )
+    print(merged["_merge"].value_counts())
+    return merged.sort_values(["Chromosome", "location"]).reset_index()
 
 if __name__ == "__main__":
     df = pd.read_csv("data/merged_df.csv")
