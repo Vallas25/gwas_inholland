@@ -8,7 +8,7 @@ def main():
     result = group_by_location(df)
     p_values = get_p_values(result)
     p_values["-logp"] = -np.log10(p_values["p_value"])
-    create_manhattan_like_plot(df=p_values, y_axis_name="-logp", x_axis_name="position")
+    create_manhattan_plot(df=p_values, y_axis_name="-logp", x_axis_name="position")
 
 if __name__ == "__main__":
     main()
