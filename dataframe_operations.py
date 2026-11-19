@@ -1,5 +1,6 @@
 import pandas as pd
 import scipy.stats as stats
+import sys
 
 def get_average_per_plant(df: pd.DataFrame, series_name: str) -> pd.DataFrame:
     # groups series, then gets average by grouped.
@@ -105,8 +106,37 @@ def group_by_location(df: pd.DataFrame, phenotype:str="Pollen Viability") -> lis
 
     return result
 
+def get_p_values(data_frames: list, phenotype:str="Pollen Viability") -> pd.DataFrame:
+    positions = []
+    p_values = []
+    
+    for item in data_frames:
+        position = item["position"]
+        df = item["df"]
+        unique = df[position].unique()
+
+        grouped = df.groupby(df[position])
+        groups = []
+
+        if len(unique) < 2:
+            continue
+            
+        for combination in unique:
+            groups.append(grouped.get_group(combination)[phenotype])
+
+        p_value = stats.f_oneway(*groups).pvalue
+
+        positions.append(position)
+        p_values.append(p_value)
+
+    return pd.DataFrame({
+        "position": positions,
+        "p_value": p_values
+        })
 
 if __name__ == "__main__":
     df = pd.read_csv("data/merged_df.csv")
     result = group_by_location(df)
-    print(result[0])
+    print(len(result))
+    p_values = get_p_values(result)
+    print(p_values)
