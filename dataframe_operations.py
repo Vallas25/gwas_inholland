@@ -1,6 +1,5 @@
 import pandas as pd
 import scipy.stats as stats
-import sys
 
 def get_average_per_plant(df: pd.DataFrame, series_name: str) -> pd.DataFrame:
     # groups series, then gets average by grouped.
@@ -26,8 +25,10 @@ def filter_failed_hetrozygote(df: pd.DataFrame) -> pd.DataFrame:
     # returns df where all failed mesurements and hetrozygote loci are removed
     df = df.copy()
 
+    # names of allele columns
     allele_columns = ["Parent1.1", "Parent1.2", "Parent2.1", "Parent2.2"]
 
+    # masks for removing rows containing a failed mesurement or both parents are heterozygotes
     mask_heterozygote = (
         df[allele_columns].eq(df["Parent1.1"], axis=0).all(axis=1)
     )
@@ -36,6 +37,7 @@ def filter_failed_hetrozygote(df: pd.DataFrame) -> pd.DataFrame:
         df.eq("failed").any(axis=1)
     )
 
+    # returning dataframe with only homologous parental markers and non failed mesurements
     df = df.loc[~mask_heterozygote]
     return df.loc[~mask_failed].reset_index(drop=True)
 
@@ -44,13 +46,16 @@ def t_test_M(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df.copy()
     
+    # creating dataframe containing only the mesurements of the M plants
     df["Plant"] = df["Plant"].astype(str)
     df_m = df[(df["Plant"].str.contains("M"))].reset_index()
 
+    # creating dataframe not containing plants from either the M or N parrent
     df_other = df[~(df["Plant"].str.contains("M")) & ~(df["Plant"].str.contains("N"))].reset_index()
 
     df_other["Plant"] = df_other["Plant"].astype(int)
 
+    # grouping by plant, performing a t-test on the pollen viability column
     grouped = df_other.groupby("Plant").agg(
         p_value=("Pollen Viability",
                  lambda plant: stats.ttest_ind(plant, df_m["Pollen Viability"]).pvalue), 
@@ -58,15 +63,19 @@ def t_test_M(df: pd.DataFrame) -> pd.DataFrame:
 
     return grouped.reset_index().sort_values("Plant").reset_index(drop=True)
 
-def merge_geno_and_fenotype(df_geno: pd.DataFrame, df_feno: pd.DataFrame) -> pd.DataFrame:
+def merge_geno_and_fenotype(df_geno: pd.DataFrame, df_pheno: pd.DataFrame) -> pd.DataFrame:
+    # returns two dataframes where the geno and pheno type are merged and another with extra information from the genotype dataframe
     df_geno = df_geno.copy()
 
-    df_feno_minimal = df_feno[["Plant", "Pollen Viability"]]
+    # creating a minimal version of the phenotype df and grouping by plant
+    df_pheno_minimal = df_pheno[["Plant", "Pollen Viability"]]
 
-    df_feno_minimal = get_average_per_plant(df_feno_minimal, "Pollen Viability")
+    df_pheno_minimal = get_average_per_plant(df_pheno_minimal, "Pollen Viability")
     
+    # creating a seperate df for the marker info
     marker_info = df_geno[["Markers", "Chromosome", "location"]]
 
+    # transposing the geno df (switching columns and rows)
     df_geno_transposed = (
         df_geno
         .drop(columns=["Plant", "Chromosome", "location"])
@@ -76,10 +85,12 @@ def merge_geno_and_fenotype(df_geno: pd.DataFrame, df_feno: pd.DataFrame) -> pd.
     .   reset_index()
     )
 
+    # formatting everything correctly, so merge will go correctly
     df_geno_transposed["Plant"] = df_geno_transposed["Plant"].astype(str).str.strip()
-    df_feno_minimal["Plant"] = df_feno_minimal["Plant"].astype(str).str.strip()
+    df_pheno_minimal["Plant"] = df_pheno_minimal["Plant"].astype(str).str.strip()
 
-    return pd.merge(df_geno_transposed, df_feno_minimal, on="Plant", how="inner"), marker_info
+    # merging
+    return pd.merge(df_geno_transposed, df_pheno_minimal, on="Plant", how="inner"), marker_info
 
 def check_merge(df_merged: pd.DataFrame):
     #checks merges
@@ -89,13 +100,15 @@ def check_merge(df_merged: pd.DataFrame):
     print(df_merged.isna().sum())
 
 def group_by_location(df: pd.DataFrame, phenotype:str="Pollen Viability") -> list:
-    df = df.copy()
+    #gets SNP locations and returns list containing dictionary, wich contains position and df with geno and phenotype
 
+    # getting vallid SNP columns
     snp_cols = []
     for col in df.columns:
         if col != "Plant" and col != phenotype and col != "Unnamed: 0":
             snp_cols.append(col)
 
+    # getting list containing the location and data for said location
     result = []
 
     for col in snp_cols:
@@ -115,24 +128,33 @@ def get_p_values(data_frames: list, phenotype:str="Pollen Viability") -> pd.Data
         df = item["df"]
         unique = df[position].unique()
 
+        #grouping by basepairs
         grouped = df.groupby(df[position])
         groups = []
 
+        # if there are less than 2 unique genotypes, annova cannot be performed
         if len(unique) < 2:
             continue
             
+        # makes list for every base pair combination in data
         for combination in unique:
             groups.append(grouped.get_group(combination)[phenotype])
 
+        # performs ANOVA
         p_value = stats.f_oneway(*groups).pvalue
 
         positions.append(position)
         p_values.append(p_value)
 
+    # creates dataframe containing info
     return pd.DataFrame({
         "position": positions,
         "p_value": p_values
         })
+
+def merge_pvalues_and_genotype_info(p_values:pd.DataFrame, genotype_info:pd.DataFrame) -> pd.DataFrame:
+    # merges p-values and genotype info dataframes
+    pass
 
 if __name__ == "__main__":
     df = pd.read_csv("data/merged_df.csv")
