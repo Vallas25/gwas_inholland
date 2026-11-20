@@ -1,5 +1,6 @@
 import pandas as pd
 import scipy.stats as stats
+import numpy as np
 
 def get_average_per_plant(df: pd.DataFrame, series_name: str) -> pd.DataFrame:
     # groups series, then gets average by grouped.
@@ -34,7 +35,7 @@ def filter_failed_homozygote(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     mask_failed = (
-        df.eq("failed").all(axis=1)
+        df.eq("failed").any(axis=1)
     )
 
     # returning dataframe with only homologous parental markers and non failed mesurements
@@ -86,7 +87,6 @@ def merge_geno_and_fenotype(df_geno: pd.DataFrame, df_pheno: pd.DataFrame) -> pd
     )
 
     print("Transposed")
-    print(df_geno_transposed)
 
     # formatting everything correctly, so merge will go correctly
     df_geno_transposed["Plant"] = df_geno_transposed["Plant"].astype(str).str.strip()
@@ -167,8 +167,19 @@ def merge_pvalues_and_genotype_info(p_values:pd.DataFrame, genotype_info:pd.Data
         on="Markers",
         indicator=True
     )
-    print(merged["_merge"].value_counts())
-    return merged.sort_values(["Chromosome", "location"]).reset_index()
+    return merged
+
+def prep_df_for_plotting(df: pd.DataFrame) -> pd.DataFrame:
+    df["-logp"] = -np.log10(df["p_value"])
+    df["chr_num"] = df["Chromosome"].str.extract(r"ch(\d+)$")[0].astype(int)
+
+    grouped = df.groupby("chr_num")["location"].max()
+
+    chr_offset = grouped.cumsum().shift(1, fill_value=0)
+
+    df["location_offset"] = (df["location"] + df["chr_num"].map(chr_offset))
+
+    return df
 
 if __name__ == "__main__":
     df = pd.read_csv("data/merged_df.csv")

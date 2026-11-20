@@ -1,7 +1,11 @@
 import plotly.graph_objects as go
 import pandas as pd
 
-colors = [
+
+def create_manhattan_plot(df: pd.DataFrame, x_axis_name:str="Plant",  y_axis_name: str="-logp", threshold: float = 7.3):
+    fig = go.Figure()
+
+    colors = [
     "red",
     "violet",
     "blue",
@@ -9,15 +13,18 @@ colors = [
     "yellow",
     "orange",]
 
-def create_manhattan_plot(df: pd.DataFrame, y_axis_name: str, x_axis_name:str="Plant", threshold: float = 7.3):
-    fig = go.Figure()
+    for i, chrom in enumerate(sorted(df["chr_num"].unique())):
+        subset = df[df["chr_num"] == chrom]
 
-    # Add datapoints
-    fig.add_trace(go.Scatter(
-        x=df[x_axis_name],
-        y=df[y_axis_name],
-        mode="markers",
-        name="data"
+        fig.add_trace(go.Scattergl(
+            x=subset[x_axis_name],
+            y=subset[y_axis_name],
+            mode="markers",
+            name=f"Chr {chrom}",
+            marker=dict(
+                color=colors[i % len(colors)],
+                size=4
+            )
         ))
 
     # Add threshold line
@@ -25,7 +32,7 @@ def create_manhattan_plot(df: pd.DataFrame, y_axis_name: str, x_axis_name:str="P
         y=threshold,
         line_dash="dash",
         line_color="orange",
-        annotation_text=f"significantie niveau",
+        annotation_text=f"significantie niveau: {threshold}",
     )
 
     fig.update_layout(
