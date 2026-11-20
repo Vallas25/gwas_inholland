@@ -31,3 +31,10 @@ def t_test_M(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     return grouped.reset_index().sort_values("Plant").reset_index(drop=True)
+
+def check_merge(df_merged: pd.DataFrame):
+    #checks merges
+    print(df_merged.shape)
+    print(df_merged.head())
+    print(df_merged["Plant"].duplicated().sum())
+    print(df_merged.isna().sum())
