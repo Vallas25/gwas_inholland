@@ -13,15 +13,6 @@ def clean_phenotype_data(df: pd.DataFrame) -> pd.DataFrame:
     return df.drop(["Unnamed: 10","Unnamed: 11","Unnamed: 12","cellcount/seconds/flowers*120(=seconds to measure complete sample)"],
                      axis=1)
 
-def is_above_mean(df: pd.DataFrame, series_name: str) -> pd.DataFrame:
-    # retruns df where is above mean is added
-    df = df.copy()
-    mean = df[series_name].mean()
-
-    df[series_name + "_is_high"] = mean < df[series_name]
-
-    return df
-
 def filter_failed_homozygote(df: pd.DataFrame) -> pd.DataFrame:
     # returns df where all failed mesurements and hetrozygote loci are removed
     df = df.copy()
@@ -42,27 +33,6 @@ def filter_failed_homozygote(df: pd.DataFrame) -> pd.DataFrame:
     df = df.loc[~mask_homozygote]
     return df.loc[~mask_failed].reset_index(drop=True)
 
-def t_test_M(df: pd.DataFrame) -> pd.DataFrame:
-    # returns dataframe where all non parental plants are compared to the M parental plant and a indipended t-test is performed
-
-    df = df.copy()
-    
-    # creating dataframe containing only the mesurements of the M plants
-    df["Plant"] = df["Plant"].astype(str)
-    df_m = df[(df["Plant"].str.contains("M"))].reset_index()
-
-    # creating dataframe not containing plants from either the M or N parrent
-    df_other = df[~(df["Plant"].str.contains("M")) & ~(df["Plant"].str.contains("N"))].reset_index()
-
-    df_other["Plant"] = df_other["Plant"].astype(int)
-
-    # grouping by plant, performing a t-test on the pollen viability column
-    grouped = df_other.groupby("Plant").agg(
-        p_value=("Pollen Viability",
-                 lambda plant: stats.ttest_ind(plant, df_m["Pollen Viability"]).pvalue), 
-    )
-
-    return grouped.reset_index().sort_values("Plant").reset_index(drop=True)
 
 def merge_geno_and_fenotype(df_geno: pd.DataFrame, df_pheno: pd.DataFrame) -> pd.DataFrame:
     # returns two dataframes where the geno and pheno type are merged and another with extra information from the genotype dataframe
@@ -94,13 +64,6 @@ def merge_geno_and_fenotype(df_geno: pd.DataFrame, df_pheno: pd.DataFrame) -> pd
 
     # merging
     return pd.merge(df_geno_transposed, df_pheno_minimal, on="Plant", how="inner"), marker_info
-
-def check_merge(df_merged: pd.DataFrame):
-    #checks merges
-    print(df_merged.shape)
-    print(df_merged.head())
-    print(df_merged["Plant"].duplicated().sum())
-    print(df_merged.isna().sum())
 
 def group_by_location(df: pd.DataFrame, phenotype:str="Pollen Viability") -> list:
     #gets SNP locations and returns list containing dictionary, wich contains position and df with geno and phenotype
