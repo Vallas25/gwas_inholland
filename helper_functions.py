@@ -38,3 +38,21 @@ def check_merge(df_merged: pd.DataFrame):
     print(df_merged.head())
     print(df_merged["Plant"].duplicated().sum())
     print(df_merged.isna().sum())
+
+def get_sub_loci(df: pd.DataFrame, chr: int = 4, threshold: float | int =4) -> pd.DataFrame:
+    # returns df of sublocus position with certain paramerters
+
+    return df[(df["chr_num"] == chr) & (df["-logp"] >= threshold)]
+
+def get_top_performers(df: pd.DataFrame, top_percent: int | float = 10, asc=False) -> pd.DataFrame:
+    # gets top performers of plants
+
+    df["Plant"] = df["Plant"].astype(str)
+    df = df[~(df["Plant"].str.contains("M")) & ~df["Plant"].str.contains("N")]
+
+    grouped = df.groupby("Plant")["Pollen Viability"].mean()
+    grouped = grouped.sort_values(ascending=asc)
+
+    top_n = round(len(grouped) * top_percent / 100)
+
+    return grouped.head(top_n)

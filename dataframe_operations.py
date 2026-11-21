@@ -26,7 +26,7 @@ def filter_failed_homozygote(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     mask_failed = (
-        df.eq("failed").any(axis=1)
+        df.eq("failed").all(axis=1)
     )
 
     # returning dataframe with only homologous parental markers and non failed mesurements
@@ -88,6 +88,7 @@ def group_by_location(df: pd.DataFrame, phenotype:str="Pollen Viability") -> lis
 def get_p_values(data_frames: list, phenotype:str="Pollen Viability") -> pd.DataFrame:
     positions = []
     p_values = []
+    count = 0
     
     for item in data_frames:
         position = item["position"]
@@ -98,11 +99,13 @@ def get_p_values(data_frames: list, phenotype:str="Pollen Viability") -> pd.Data
         grouped = df.groupby(df[position])
         groups = []
 
+        # removing failed group from analisis
         if "failed" in unique:
             unique.remove("failed")
 
         # if there are less than 2 unique genotypes, annova cannot be performed
         if len(unique) < 2:
+            count += 1
             continue
             
         # makes list for every base pair combination in data
@@ -115,6 +118,7 @@ def get_p_values(data_frames: list, phenotype:str="Pollen Viability") -> pd.Data
         positions.append(position)
         p_values.append(p_value)
 
+    print(f"skiped: {count} rows")
     # creates dataframe containing info
     return pd.DataFrame({
         "Markers": positions,
@@ -133,13 +137,21 @@ def merge_pvalues_and_genotype_info(p_values:pd.DataFrame, genotype_info:pd.Data
     return merged
 
 def prep_df_for_plotting(df: pd.DataFrame) -> pd.DataFrame:
+    # prepares df for plotting of the manhattan plot
+    
+    # calculates the -logp
     df["-logp"] = -np.log10(df["p_value"])
+
+    # gets the chromosome number
     df["chr_num"] = df["Chromosome"].str.extract(r"ch(\d+)$")[0].astype(int)
 
+    # grouping by chromosome number, getting the max value for the location col
     grouped = df.groupby("chr_num")["location"].max()
 
+    # calculates the offset per chrome
     chr_offset = grouped.cumsum().shift(1, fill_value=0)
 
+    # applies offset for each chromosome
     df["location_offset"] = (df["location"] + df["chr_num"].map(chr_offset))
 
     return df
