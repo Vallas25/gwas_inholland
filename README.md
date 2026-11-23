@@ -90,12 +90,57 @@ De functie `get_average_per_plant()` accepteerd een dataframe en de naam van twe
 
 De functie `clean_phenotype_data()` accepteerd een dataframe (phenotype data) en haalt de colommen weg die geen nuttige informatie hebben.
 
-De functie `filter_failed_hetrozygote()` accepteerd een dataframe (sequencing_data) en haalt de rijen weg waarbij alle loci van de ouders (Parent) heterozygoot zijn, maar ook als er maar 1 van de readings gefaald (failed) is.
+De functie `filter_failed_homozygote()` accepteerd een dataframe (sequencing_data) en haalt de rijen weg waarbij alle loci van de ouders (Parent) heterozygoot zijn, maar ook als er maar 1 van de readings gefaald (failed) is.
 De heterozygoot test is [hier](/data/heterozygote_test.csv) te vinden en de heterozygoot + failed test is [hier](/data/failed_test.csv) te vinden.
 
 De functie `t_test_M()` accepteerd een dataframe (fenotype data) en voert vervolgens een t-test uit op deze dataset waarbij de M resultaten worden vergeleken met de niet M of N resultaten.
 Dit wordt gedaan door eerst twee dataframes te maken, 1 voor planten met M in de naam en 1 voor planten zonder M of N in de naam. Hiervoor moet de plant colom eerst volledig naar strings worden overgezet. Vervolgens worden de planten gegroupeerd en er wordt een t-test uitgevoerd(niet de goede). Hierbij wordt de M groep per plant vergeleken. Als laatst wordt de plant colom weer een naar int overgezet. Ook wordt de dataframe op plant gesorteerd en alle indexen worden gereset.
 
-De functie `create_manhattan_like_plot()` maakt een plot die iets weg moet hebben van een hanhattan plot hier enkele voorbeelden:
+De functie `create_manhattan_like_plot()` maakt een plot die iets weg moet hebben van een hanhattan plot (later vervangen door `create_manhattan_plot()`) hier enkele voorbeelden:
 ![met gemiddelde](plots/pollen_viability_average.png)
+figuur 2: de pollen viability per plant
 ![met p waarde](plots/pollen_viability_t-test.png)
+figuur 3: de p-waarde berekend met de functie `t_test_m()` per plant
+![groupeerd](plots/grouped_pollen_viability.png)
+figuur 4: de pollen viability per genotype op positie 4616.
+
+De functie `merge_geno_and_phenotype()` voegd de feno- en genotype dataframes samen. Dit wordt gedaan door eerst een minimale versie van de fenotype tabel te maken. Het gemiddelde per plant wordt vervolgens berekend door de functie `get_average_per_plant()`. Een appart data frame wordt gecreërd voor de merker info. De genotype tabel wordt vervolgens omgezet (colom en rijën worden omgedraaid). De plant colommen van beide dataframes worden correct geformat, waarna ze worden gemerged.
+
+De functie `group_by_location()` maakt een lijst met dictionaries met daarin de marker en en een dataframe met de daarbij behorende fenotypische/genetische informatie. Hierbij wordt eerst een lijst gemaakt met vallide merkers.
+
+De functie `get_p_values()` maakt een dataframe met de marker en de p-waarde die berekend is met een ANOVA. Voordat de ANOVA wordt uitgevoerd, worden alle failed metingen weg gefilterd. Ook worden alle merkers met maar 1 genotype weggefilterd, hierop kan geen ANOVA worden uitgevoerd.
+
+De functie `merge_pvalues_and_genotype_info()` voegt het dataframe van `get_p_values()` en het info dataframe van `merge_geno_and_phenotype()` samen.
+
+De functie `prep_df_for_plotting()` zorgd ervoor dat alle informatie in het dataframe correct staat zodat deze kan worden gebruikt voor het plotten van de manhattan plot. Zo worden de p-waardes omgezet in -log(p)-waardes. Chromosoom nummers worden uit de `Chromosome` colom gehaald. Deze worden vervolgens gebruikt om de positie offset te bepalen
+
+De functie `create_manhattan_plot()` zorgt ervoor dat de manhattan plot wordt gemaakt met behulp van plotly.
+
+## plots
+![non colored plot](plots/manhattan-plot.png)
+Figuur 5: 1e versie van de manhattanplot. Er zijn nog geen kleuren toegevoegd per chromosoom
+![non grouped plot](plots/manhattan-plot%20(1).png)
+Figuur 6: 2e versie van de manhattanplot. De chromosomen zijn nu gekleurd. Er is te zien dat er gebruik wordt gemaakt van de positie per chromosoom.
+![grouped plot 1](plots/manhattan-plot%20(2).png)
+Figuur 7: 3e versie van de manhattanplot. er is nu gebruik gemaakt van de location offset, hierdoor zijn de markers gegroupeerd per chromosoom.
+![grouped plot 2](plots/manhattan-plot%20(3).png)
+Figuur 8: 4e versie van de manhattanplot. inplaats van elke merker verwijderen waarbij ook maar 1 gefaalde meting is vastgesteld, zijn deze wel meegenomen in de berekeningen. De `failed` metingen hebben geen rol gespeeld in de berekeningen.
+
+## overige info
+```
+total length: 5365
+length after filtering: 3160
+unique markers: 3160
+loaded genotype info
+loaded phenotype info
+Transposed
+merged geno and phenotype
+grouped by location
+skiped: 461 rows
+got p-values
+length after p-values 2699
+length after final merge: 2699
+final merge compleated
+preped data for plotting
+length after prep: 2699
+```
