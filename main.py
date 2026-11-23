@@ -16,7 +16,7 @@ def main():
     pheno_copy = df_pheno.copy()
     print("loaded phenotype info")
 
-    merged, info = merge_geno_and_fenotype(clean_geno, df_pheno)
+    merged, info = merge_geno_and_phenotype(clean_geno, df_pheno)
     print("merged geno and phenotype")
 
     result = group_by_location(merged)

@@ -14,13 +14,13 @@ def clean_phenotype_data(df: pd.DataFrame) -> pd.DataFrame:
                      axis=1)
 
 def filter_failed_homozygote(df: pd.DataFrame) -> pd.DataFrame:
-    # returns df where all failed mesurements and hetrozygote loci are removed
+    # returns df where all failed mesurements and homozygote loci are removed
     df = df.copy()
 
     # names of allele columns
     allele_columns = ["Parent1.1", "Parent1.2", "Parent2.1", "Parent2.2"]
 
-    # masks for removing rows containing a failed mesurement or both parents are heterozygotes
+    # masks for removing rows containing a failed mesurement or both parents are homozygotes
     mask_homozygote = (
         df[allele_columns].eq(df["Parent1.1"], axis=0).all(axis=1)
     )
@@ -34,7 +34,7 @@ def filter_failed_homozygote(df: pd.DataFrame) -> pd.DataFrame:
     return df.loc[~mask_failed].reset_index(drop=True)
 
 
-def merge_geno_and_fenotype(df_geno: pd.DataFrame, df_pheno: pd.DataFrame) -> pd.DataFrame:
+def merge_geno_and_phenotype(df_geno: pd.DataFrame, df_pheno: pd.DataFrame) -> pd.DataFrame:
     # returns two dataframes where the geno and pheno type are merged and another with extra information from the genotype dataframe
     df_geno = df_geno.copy()
 
