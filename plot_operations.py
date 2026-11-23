@@ -42,3 +42,4 @@ def create_manhattan_plot(df: pd.DataFrame, x_axis_name:str="Plant",  y_axis_nam
     )
 
     fig.show()
+    fig.write_html("plots/manhattan_plot.html")
