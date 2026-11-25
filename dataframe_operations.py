@@ -2,10 +2,25 @@ import pandas as pd
 import scipy.stats as stats
 import numpy as np
 
-def get_average_per_plant(df: pd.DataFrame, series_name: str) -> pd.DataFrame:
+def get_average_per_plant(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
     # groups series, then gets average by grouped.
     return (
-        df.groupby("Plant")[series_name].mean().reset_index()
+        df.groupby("Plant")[column_name].mean().reset_index()
+    )
+
+def grouped_slope(df: pd.DataFrame, group_cols, x_col: str, y_col: str) -> pd.DataFrame:
+
+    def slope(g):
+        g = g[[x_col, y_col]].dropna()
+        if len(g) < 2 or g[x_col].nunique() < 2:
+            return np.nan  # slope undefined
+        return np.polyfit(g[x_col], g[y_col], 1)[0]
+
+    return (
+        df.groupby(group_cols)
+          .apply(slope, include_groups=False)
+          .rename("slope")
+          .reset_index()
     )
 
 def clean_phenotype_data(df: pd.DataFrame) -> pd.DataFrame:
