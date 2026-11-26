@@ -144,3 +144,62 @@ final merge compleated
 preped data for plotting
 length after prep: 2699
 ```
+
+
+OLS regression met alleen chamber
+```
+                              OLS Regression Results                             
+=================================================================================
+Dep. Variable:     Q('Pollen Viability')   R-squared:                       0.050
+Model:                               OLS   Adj. R-squared:                  0.049
+Method:                    Least Squares   F-statistic:                     38.21
+Date:                   Thu, 26 Nov 2026   Prob (F-statistic):           1.06e-09
+Time:                           10:59:11   Log-Likelihood:                -3311.0
+No. Observations:                    728   AIC:                             6626.
+Df Residuals:                        726   BIC:                             6635.
+Df Model:                              1                                         
+Covariance Type:               nonrobust                                         
+===================================================================================
+                      coef    std err          t      P>|t|      [0.025      0.975]
+-----------------------------------------------------------------------------------
+Intercept          39.8859      1.211     32.929      0.000      37.508      42.264
+C(Chamber)[T.3]   -10.4888      1.697     -6.182      0.000     -13.820      -7.158
+==============================================================================
+Omnibus:                      167.903   Durbin-Watson:                   0.097
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):               37.695
+Skew:                           0.234   Prob(JB):                     6.53e-09
+Kurtosis:                       1.988   Cond. No.                         2.64
+==============================================================================
+```
+
+
+OLS regression met zowel chaber als week
+```
+                              OLS Regression Results                             
+=================================================================================
+Dep. Variable:     Q('Pollen Viability')   R-squared:                       0.121
+Model:                               OLS   Adj. R-squared:                  0.117
+Method:                    Least Squares   F-statistic:                     33.18
+Date:                   Thu, 26 Nov 2026   Prob (F-statistic):           4.19e-20
+Time:                           11:01:32   Log-Likelihood:                -3282.8
+No. Observations:                    728   AIC:                             6574.
+Df Residuals:                        724   BIC:                             6592.
+Df Model:                              3                                         
+Covariance Type:               nonrobust                                         
+========================================================================================
+                           coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------
+Intercept               41.5558      2.369     17.543      0.000      36.905      46.206
+C(Chamber)[T.3]          3.5000      3.342      1.047      0.295      -3.061      10.061
+Week                    -0.2779      0.343     -0.810      0.418      -0.952       0.396
+C(Chamber)[T.3]:Week    -2.4116      0.493     -4.892      0.000      -3.379      -1.444
+==============================================================================
+Omnibus:                      110.931   Durbin-Watson:                   0.238
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):               30.323
+Skew:                           0.185   Prob(JB):                     2.60e-07
+Kurtosis:                       2.071   Cond. No.                         36.8
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+```
